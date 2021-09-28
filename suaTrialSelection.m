@@ -27,7 +27,7 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
      clear i
      for i = channum
          if ~isempty(filenames{i})
-             filename = filenames(i);
+             filename = filenames{i};
              
              NDETrCt = unitsData.new_data(i).channel_data.fixedc; %trial by trial contrasts in NDE
              DETrCt = unitsData.new_data(i).channel_data.contrast; %trial by trial contrasts in DE
@@ -90,9 +90,10 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
              bsl_origin_data_Resp = noFiltBs(:,contrastBin);
              filtered_dSUA_Resp = filtBs(:,contrastBin);
              sua_bsl =  mean(filtered_dSUA_Resp(1:200,:),1);
+             trialnb = find(contrastBin);
+             %trials = unitsData.new_data(i).channel_data.trial(contrastBin);
              
-             trials = unitsData.new_data(i).channel_data.trial(contrastBin);
-             
+             clear tr
              for tr = 1:length(powerResp)
                  if mean_wnd1_Resp(tr) > mean(sua_bsl)+1.96*std(sua_bsl)  && powerResp(tr) > mean(power0)+1.96*std(power0) %/sqrt(length(sua_bsl)) /sqrt(length(power0))
                      
@@ -110,18 +111,17 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
              %%%%%%%%%%%determine the first peak location for each trial of a given single unit %%%%%%%%
              all_locsdSUA_trials = nan(6,length(filtered_dSUA_Resp(1,:)));
              clear trial
-             for trial = 1:length(filtered_dSUA_Resp(1,:))
-                 
+             for trial = 1:length(filtered_dSUA_Resp(1,:))  
                  for ln = 1:550
                      if filtered_dSUA_Resp(200+ln,trial) < filtered_dSUA_Resp(200+ln+1,trial) && ~all(isnan(filtered_dSUA_Resp(:,trial)))
-                         [~,locsdSUA_trial] = findpeaks(filtered_dSUA_Resp(200+ln:1499,trial));
+                         locsdSUA_trial = findpeaks(filtered_dSUA_Resp(200+ln:1499,trial));
                          
                          %if peak1 is too small, peak2 becomes peak1
-                         if filtered_dSUA_Resp(locsdSUA_trial(1)+200+ln,trial) >= 0.4*filtered_dSUA_Resp(locsdSUA_trial(2)+200+ln)
+                         if filtered_dSUA_Resp(locsdSUA_trial.loc(1)+200+ln,trial) >= 0.4*filtered_dSUA_Resp(locsdSUA_trial.loc(2)+200+ln)
                              %store first peak location
-                             all_locsdSUA_trials(1:length(locsdSUA_trial),trial) = locsdSUA_trial(1:end)+200+ln;
+                             all_locsdSUA_trials(1:length(locsdSUA_trial.loc),trial) = locsdSUA_trial.loc(1:end)+200+ln;
                          else
-                             all_locsdSUA_trials(1:length(locsdSUA_trial(2:end)),trial) = locsdSUA_trial(2:end)+200+ln;
+                             all_locsdSUA_trials(1:length(locsdSUA_trial.loc(2:end)),trial) = locsdSUA_trial.loc(2:end)+200+ln;
                              
                          end
                          
@@ -164,7 +164,7 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
                  end
              end
              %{
-        figure(); plot(-199:1300, filtered_dSUA_high(1:1500,:))
+        figure(); plot(-199:1300, filtered_dSUA_Resp(1:1500,:))
         hold on
         plot(all_locsdSUA_trials(1:4,1)-200, all_pks(:,1))
         set(gca,'box','off')
@@ -185,8 +185,8 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
                      if filtered_dSUA_Resp(loc,tr) < filtered_dSUA_Resp(loc+1,tr) && ~all(isnan(filtered_dSUA_Resp(:,tr)))
                          if length(filtered_dSUA_Resp(loc:200,tr)) >= 3
                              if ~isempty(findpeaks(filtered_dSUA_Resp(loc:200,tr)))
-                                 [~, bsl_peak_locs] = findpeaks(filtered_dSUA_Resp(loc:200,tr));
-                                 bsl_peaks(1,tr) = max(filtered_dSUA_Resp(bsl_peak_locs+loc,tr));
+                                 bsl_peak_locs = findpeaks(filtered_dSUA_Resp(loc:200,tr));
+                                 bsl_peaks(1,tr) = max(filtered_dSUA_Resp(bsl_peak_locs.loc+loc,tr));
                              else
                                  bsl_peaks(1,tr) = NaN;
                              end
@@ -196,9 +196,12 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
                  end
              end
              
-             out_bsl_peaks = isoutlier(bsl_peaks);
+             % bsl peaks above outlier threshold
+            % out_bsl_peaks = isoutlier(bsl_peaks);
+             out_bsl_peaks = bsl_peaks > nanmean(bsl_peaks)+ 1.96*std(bsl_peaks,[],'omitnan');
              
-             p1outliers = isoutlier(all_pks(1,:));
+             %p1outliers = isoutlier(all_pks(1,:));
+             p1outliers = all_pks(1,:) > nanmean(all_pks)+ 1.96*std(all_pks,[],'omitnan');
              clear tr
              for tr = 1:length(filtered_dSUA_Resp(1,:))
                  %exclude trials
@@ -221,42 +224,26 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
                  end
              end
              trialnb = trialnb(~all(isnan(origin_data_Resp)));
-             binary_data_high = SUA_data.channel_data.spk_bin_chan(:,trialnb); %get the binary spikes data
+             binary_data_high = unitsData.new_data(i).channel_data.spk_bin_chan(:,trialnb); %get the binary spikes data
              origin_data_Resp = origin_data_Resp(:,~all(isnan(origin_data_Resp)));
-             all_locsdMUA_trials =  all_locsdMUA_trials(:,~all(isnan(all_locsdMUA_trials)));
+             all_locsdSUA_trials =  all_locsdSUA_trials(:,~all(isnan(all_locsdSUA_trials)));
              
              %filtered_dMUA_high = filtered_dMUA_high(:,~all(isnan(filtered_dMUA_high))); % for nan - cols
              %all_pks = all_pks(:, ~all(isnan(all_pks)));
              %bsl_origin_data_high = bsl_origin_data_high(:,~all(isnan(bsl_origin_data_high)));
              
-             
-             binNb = sprintf('bin%d', n);
-             if n ==1 && length(origin_data_Resp(1,:)) >=10 %first bin == high contrast monocular condition will serve as an indicator of the minimum number of trials required for the analysis
+             xfilename = strcat('x',filename);
+             binNb = sprintf('lowcontDE%dNDE%d', lowDECont*100, lowNDECont*100);
+             if  length(origin_data_Resp(1,:)) >=10 %first bin == high contrast monocular condition will serve as an indicator of the minimum number of trials required for the analysis
                  
-                 NoFiltMultiContSUA.(filename).(binNb) = origin_data_Resp;
-                 peakLocs.(filename).(binNb) = all_locsdMUA_trials; %create dynamical peak locations structures
-                 binSpkTrials.(filename).(binNb) = binary_data_high;
-                 %FiltMultiContMUA.(filename).(binNb) =  filtered_dMUA_high;
-                 %BsNoFiltMultiContMUA.(filename).(binNb) = bsl_origin_data_high;
-                 
-             elseif n == 1 && length(origin_data_Resp(1,:)) <10
-                 NoFiltMultiContSUA.(filename).(binNb) = [];
-                 peakLocs.(filename).(binNb) = [];
-                 binSpkTrials.(filename).(binNb) = [];
-                 %all_pks(:,:) = [];
-                 % FiltMultiContMUA.(filename).(binNb) =  [];
-                 
-                 
-             elseif n > 1 && length(origin_data_Resp(1,:)) >=10
-                 NoFiltMultiContSUA.(filename).(binNb) = origin_data_Resp;
-                 peakLocs.(filename).(binNb) = all_locsdMUA_trials; %create dynamical peak locations structures
-                 binSpkTrials.(filename).(binNb) = binary_data_high;
-                 %FiltMultiContMUA.(filename).(binNb) =  filtered_dMUA_high;
-                 % BsNoFiltMultiContMUA.(filename).(binNb) = bsl_origin_data_high;
-             elseif n > 1 && length(origin_data_Resp(1,:)) <10
-                 NoFiltMultiContSUA.(filename).(binNb) = [];
-                 peakLocs.(filename).(binNb) = [];
-                 binSpkTrials.(filename).(binNb) = [];
+                 NoFiltMultiContSUA.(xfilename).(binNb) = origin_data_Resp;
+                 peakLocs.(xfilename).(binNb) = all_locsdSUA_trials; %create dynamical peak locations structures
+                 binSpkTrials.(xfilename).(binNb) = binary_data_high;
+                                 
+             elseif  length(origin_data_Resp(1,:)) <10
+                 NoFiltMultiContSUA.(xfilename).(binNb) = [];
+                 peakLocs.(xfilename).(binNb) = [];
+                 binSpkTrials.(xfilename).(binNb) = [];
              end
              
              
