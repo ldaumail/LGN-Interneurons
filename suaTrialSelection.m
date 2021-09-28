@@ -1,4 +1,4 @@
-function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames)
+function [selectData] = suaTrialSelection(unitsData, filenames)
 %This function allows to select:
 %    -the peak locations of the smoothed (low-pass filtered) data
 %    - as well as the trials data they correspond to.
@@ -19,9 +19,7 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
  channum = 1: length(unitsData.new_data);
  xabs = -199:1300;
  nyq = 500;
- 
- NoFiltMultiContSUA = struct();
- peakLocs = struct(); %store filtered data peak locations used to isolate peak values of unfiltered data
+ selectData = struct(); %store: 1) Convolved trial data, 2)Binary spike data 3) filtered data peak locations used to isolate peak values of unfiltered data 4) channel number
  
  for n = 1:size(contPairs,2)
      clear i
@@ -224,7 +222,7 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
                  end
              end
              trialnb = trialnb(~all(isnan(origin_data_Resp)));
-             binary_data_high = unitsData.new_data(i).channel_data.spk_bin_chan(:,trialnb); %get the binary spikes data
+             binary_data_Resp = unitsData.new_data(i).channel_data.spk_bin_chan(:,trialnb); %get the binary spikes data
              origin_data_Resp = origin_data_Resp(:,~all(isnan(origin_data_Resp)));
              all_locsdSUA_trials =  all_locsdSUA_trials(:,~all(isnan(all_locsdSUA_trials)));
              
@@ -236,14 +234,15 @@ function [peakLocs, NoFiltMultiContSUA] = suaTrialSelection(unitsData, filenames
              binNb = sprintf('lowcontDE%dNDE%d', lowDECont*100, lowNDECont*100);
              if  length(origin_data_Resp(1,:)) >=10 %first bin == high contrast monocular condition will serve as an indicator of the minimum number of trials required for the analysis
                  
-                 NoFiltMultiContSUA.(xfilename).(binNb) = origin_data_Resp;
-                 peakLocs.(xfilename).(binNb) = all_locsdSUA_trials; %create dynamical peak locations structures
-                 binSpkTrials.(xfilename).(binNb) = binary_data_high;
+                 selectData.(xfilename).NoFiltMultiContSUA.(binNb) = origin_data_Resp;
+                 selectData.(xfilename).peakLocs.(binNb) = all_locsdSUA_trials; %create dynamical peak locations structures
+                 selectData.(xfilename).binSpkTrials.(binNb) = binary_data_Resp;
+                 selectData.(xfilename).chan = unitsData.new_data(i).channel_data.chan;
                                  
              elseif  length(origin_data_Resp(1,:)) <10
-                 NoFiltMultiContSUA.(xfilename).(binNb) = [];
-                 peakLocs.(xfilename).(binNb) = [];
-                 binSpkTrials.(xfilename).(binNb) = [];
+                 selectData.(xfilename).NoFiltMultiContSUA.(binNb) = [];
+                 selectData.(xfilename).peakLocs.(binNb) = [];
+                 selectData.(xfilename).binSpkTrials.(binNb) = [];
              end
              
              
