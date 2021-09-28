@@ -19,27 +19,41 @@ cellClass([1,46,55]) = [];
  allContLevels =[];
  for i =1:71
      if ~isempty(filenames{i})
-         contLevels = unique(unitsData.new_data(i).channel_data.fixedc);
+         contLevels = unique(unitsData.new_data(i).channel_data.contrast);
          allContLevels = unique([allContLevels; contLevels]);
      end
  end
  
  
-%% SECOND: 
+%% Second: Get selected trials data
+directory = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\loic_code_042021\lgn_interneuron_suppression';
+addpath(genpath(directory))
+selected_data = suaTrialSelection(unitsData, filenames);%get 
+allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\all_cont_lgn_data_09282021';
+save(strcat(allfilename, '.mat'), 'selected_data');
 
-allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\binocular_adaptation\all_units\all_locs_data_95CI_05022021';
-save(strcat(allfilename, '.mat'), 'peakLocs');
+%% Test for binocular modulation
+
+%relevant comparisons:
+%(]0:0.1] NDE && ]0:0.1] DE) vs (0 NDE && ]0.01]DE)
+%(]0.1:0.3] NDE && ]0:0.1] DE) vs (0 NDE && ]0.01]DE)
+%(]0.3:0.5] NDE && ]0:0.1] DE) vs (0 NDE && ]0.01]DE)
+%(]0.7:1] NDE && ]0:0.1] DE) vs (0 NDE && ]0.01]DE)
+
+%Repeat for ]0.1:0.3] DE, ]0.3:0.5] DE,]0.7:1] DE ===> total of 16 tests
 
 
-%allfilename = [newdatadir 'su_peaks_03032020_corrected\all_units\all_data_peaks'];
- %save(strcat(allfilename, '.mat'), 'data_peaks');
- allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\binocular_adaptation\all_units\FiltMultiContSUA_05022021';
- save(strcat(allfilename, '.mat'), 'FiltMultiContSUA');
-% allfilename = [newdatadir 'su_peaks_03032020_corrected\all_units\clean_SUA_locs'];
-% save(strcat(allfilename, '.mat'), 'peaks_locs');
- allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\binocular_adaptation\all_units\NoFiltMultiContSUA_06212021';
- save(strcat(allfilename, '.mat'), 'NoFiltMultiContSUA');
- 
- allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\binocular_adaptation\all_units\BsNoFiltMultiContSUA_05022021';
- save(strcat(allfilename, '.mat'), 'BsNoFiltMultiContSUA');
+lowContNDE = [0, 10, 30, 70];
+lowContDE = [0, 10, 30, 70];
+
+%binoconds:
+binoConds = combvec(lowContDE,lowContNDE);
+monoConds = binoConds(1,:);
+
+
+
+
+
+
+
  
