@@ -14,6 +14,9 @@ cellClass = {'K','M','P','K','K','K','M','P','P','','M','M','','','M','','','P',
 '','','M','M','M','P','M','M','M','M','P','P'};
 cellClass([1,46,55]) = [];
 
+directory = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\loic_code_042021\lgn_interneuron_suppression';
+addpath(genpath(directory))
+
 %% contrast levels encountered in the dominant eye
 
  allContLevels =[];
@@ -26,8 +29,7 @@ cellClass([1,46,55]) = [];
  
  
 %% Second: Get selected trials data
-directory = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\loic_code_042021\lgn_interneuron_suppression';
-addpath(genpath(directory))
+
 selected_data = suaTrialSelection(unitsData, filenames);%get 
 allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\all_cont_lgn_data_09282021';
 save(strcat(allfilename, '.mat'), 'selected_data');
@@ -50,6 +52,19 @@ lowContDE = [0, 10, 30, 70];
 binoConds = combvec(lowContDE,lowContNDE);
 monoConds = binoConds(1,:);
 
+sigResults = binocularModulationPowerTest(selected_data, binoConds, monoConds);
+
+%% Try with more pooling of contrast levels to save trials
+selected_data = suaTrialSelectionContPool(unitsData, filenames);%get 
+
+lowContNDE = [50];
+lowContDE = [0];
+
+%binoconds:
+binoConds = combvec(lowContDE,lowContNDE);
+monoConds = binoConds(1,:);
+
+sigResults = binocularModulationPowerTest(selected_data, binoConds, monoConds);
 
 
 

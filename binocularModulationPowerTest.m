@@ -1,9 +1,9 @@
-function [pvals] = binocularModulationPowerTest(suaData, binoConds, monoConds)
+function [all_sigs95] = binocularModulationPowerTest(suaData, binoConds, monoConds)
 %function that performs tests of comparisons between monocular and multiple
 %written on 09-28-2021
 
 %binocular conditions
-suaData = selected_data; 
+%suaData = selected_data; 
 xfilenames = fieldnames(suaData);
 
 Ses = struct();
@@ -27,7 +27,7 @@ all_sigs90 = nan(length(fieldnames(suaData)),length(monoConds));
 for i = 1:length(channum)
     xfilename = xfilenames{i};
     for n =1:length(monoConds)
-        monoBinNb = sprintf('lowcontDE%dNDE0', monoConds(n));
+        monoBinNb = sprintf('lowcontDE%dNDE0Mono', monoConds(n));
         binoBinNb = sprintf('lowcontDE%dNDE%d',binoConds(1,n), binoConds(2,n));
 
         if ~isempty(suaData.(xfilename).NoFiltMultiContSUA.(binoBinNb)) & ~isempty(suaData.(xfilename).NoFiltMultiContSUA.(monoBinNb))

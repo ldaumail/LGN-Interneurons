@@ -1,4 +1,4 @@
-function [selectData] = suaTrialSelection(unitsData, filenames)
+function [selectData] = suaTrialSelectionContPool(unitsData, filenames)
 %This function allows to select:
 %    -the peak locations of the smoothed (low-pass filtered) data
 %    - as well as the trials data they correspond to.
@@ -15,16 +15,20 @@ function [selectData] = suaTrialSelection(unitsData, filenames)
  
  %lets create contrast limits (bins to pool different contrast levels)
  
- % option 1: more stringent = more bins
- contLims = [0,0.1,0.3,0.5,0.7,1]; 
- contPairs = combvec(contLims(1:end-1), contLims(1:end-1)); %all possible combinations of lower contrast boundary levels (exclude highest contrast, as it is the highest boundary, it won't work in the for loop)
+
+ % Option 2: pooling more contrast levels together
+ %contLims = [0,0.1,0.3,0.5,0.7,1]; 
+contLimsDE = [0,1]; 
+contLimsNDE = [0.5,1];
+contPairs = combvec(contLimsNDE(1:end-1), contLimsDE(1:end-1)); %all possible combinations of lower contrast boundary levels (exclude highest contrast, as it is the highest boundary, it won't work in the for loop)
+ 
  
  channum = 1: length(unitsData.new_data);
  xabs = -199:1300;
  nyq = 500;
  selectData = struct(); %store: 1) Convolved trial data, 2)Binary spike data 3) filtered data peak locations used to isolate peak values of unfiltered data 4) channel number
  
- for n = 1:size(contPairs,2)+1
+ for n = 1:2
      clear i
      for i = channum
          if ~isempty(filenames{i})
@@ -35,21 +39,21 @@ function [selectData] = suaTrialSelection(unitsData, filenames)
              
              blankcontrast = DETrCt ==  0 & NDETrCt ==  0; %get logicacal indices of trials with 0 contrast in both eyes
              
-             if n < size(contPairs,2)+1
+             if n ==1
              %if (find(contLims == contPairs(1,n))+1 <= length(contLims)) & (find(contLims == contPairs(2,n))+1 <= length(contLims))
              lowNDECont = contPairs(1,n); %lower NDE contrast boundary
-             highNDECont = contLims(find(contLims == contPairs(1,n))+1); %higher NDE contrast boundary
+             highNDECont = contLimsNDE(find(contLimsNDE == contPairs(1,n))+1); %higher NDE contrast boundary
              
              lowDECont = contPairs(2,n); %lower DE contrast boundary
-             highDECont = contLims(find(contLims == contPairs(2,n))+1); %higher DE contrast boundary
+             highDECont = contLimsDE(find(contLimsDE == contPairs(2,n))+1); %higher DE contrast boundary
              
              contrastBin = (NDETrCt >  lowNDECont &  NDETrCt <= highNDECont)& (DETrCt > lowDECont & DETrCt <= highDECont);
-              else
-                  if n == size(contPairs,2)+1 %for the monocular condition
-                      lowDECont = contPairs(2,n); %lower DE contrast boundary
-                      highDECont = contLims(find(contLims == contPairs(2,n))+1); %higher DE contrast boundary
-                      contrastBin =  (NDETrCt ==  0) & (DETrCt > lowDECont & DETrCt <= highDECont);
-                  end
+             else
+                 if n ==2 %for the monocular condition
+                     lowDECont = contPairs(2,n-1); %lower DE contrast boundary
+                     highDECont = contLimsDE(find(contLimsDE == contPairs(2,n-1))+1); %higher DE contrast boundary    
+                     contrastBin =  (NDETrCt ==  0) & (DETrCt > lowDECont & DETrCt <= highDECont);
+                 end
              end
              trialidx = 1:length(unitsData.new_data(i).channel_data.sdftr_chan(1,:)); %trial number of each trial for a given unit
              noFiltBs = nan(length(xabs), length(trialidx)); %to store the baseline corrected unfiltered data
@@ -239,16 +243,15 @@ function [selectData] = suaTrialSelection(unitsData, filenames)
              %filtered_dMUA_high = filtered_dMUA_high(:,~all(isnan(filtered_dMUA_high))); % for nan - cols
              %all_pks = all_pks(:, ~all(isnan(all_pks)));
              %bsl_origin_data_high = bsl_origin_data_high(:,~all(isnan(bsl_origin_data_high)));
-             
-             
-             xfilename = strcat('x',filename);
+              xfilename = strcat('x',filename);
              if n == 1
                  binNb = sprintf('lowcontDE%dNDE%d', lowDECont*100, lowNDECont*100);
-             else
+             else 
                  if n ==2
                      binNb = sprintf('lowcontDE%dNDE0Mono', lowDECont*100);
                  end
              end
+                     
              if  length(origin_data_Resp(1,:)) >=10 %first bin == high contrast monocular condition will serve as an indicator of the minimum number of trials required for the analysis
                  
                  selectData.(xfilename).NoFiltMultiContSUA.(binNb) = origin_data_Resp;
