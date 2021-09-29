@@ -54,6 +54,8 @@ binoConds = combvec(lowContDE,lowContNDE);
 monoConds = binoConds(1,:);
 
 sigResults = binocularModulationPowerTest(selected_data, binoConds, monoConds);
+allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\binmod_lgn_power_test_09292021';
+save(strcat(allfilename, '.mat'), 'sigResults');
 
 %% Try with more pooling of contrast levels to save trials
 selected_data = suaTrialSelectionContPool(unitsData, filenames);%get 
