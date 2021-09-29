@@ -24,7 +24,7 @@ function [selectData] = suaTrialSelection(unitsData, filenames)
  nyq = 500;
  selectData = struct(); %store: 1) Convolved trial data, 2)Binary spike data 3) filtered data peak locations used to isolate peak values of unfiltered data 4) channel number
  
- for n = 1:size(contPairs,2)+1
+ for n = 1:size(contPairs,2)*2
      clear i
      for i = channum
          if ~isempty(filenames{i})
@@ -45,9 +45,9 @@ function [selectData] = suaTrialSelection(unitsData, filenames)
              
              contrastBin = (NDETrCt >  lowNDECont &  NDETrCt <= highNDECont)& (DETrCt > lowDECont & DETrCt <= highDECont);
               else
-                  if n == size(contPairs,2)+1 %for the monocular condition
-                      lowDECont = contPairs(2,n); %lower DE contrast boundary
-                      highDECont = contLims(find(contLims == contPairs(2,n))+1); %higher DE contrast boundary
+                  if n >= size(contPairs,2)+1 %for the monocular condition
+                      lowDECont = contPairs(2,n-size(contPairs,2)); %lower DE contrast boundary
+                      highDECont = contLims(find(contLims == contPairs(2,n - size(contPairs,2)))+1); %higher DE contrast boundary
                       contrastBin =  (NDETrCt ==  0) & (DETrCt > lowDECont & DETrCt <= highDECont);
                   end
              end
