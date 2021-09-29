@@ -31,7 +31,8 @@ addpath(genpath(directory))
 %% Second: Get selected trials data
 
 selected_data = suaTrialSelection(unitsData, filenames);%get 
-allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\all_cont_lgn_data_09282021';
+
+allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\all_cont_lgn_data_09292021';
 save(strcat(allfilename, '.mat'), 'selected_data');
 
 %% Test for binocular modulation
