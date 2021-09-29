@@ -26,7 +26,7 @@ all_sigs90 = nan(length(fieldnames(suaData)),length(monoConds));
 
 for i = 1:length(channum)
     xfilename = xfilenames{i};
-    for n =1:length(monoConds)
+    for n =1:length(monoConds) %could be 1:size(binoConds,2) as well
         monoBinNb = sprintf('lowcontDE%dNDE0Mono', monoConds(n));
         binoBinNb = sprintf('lowcontDE%dNDE%d',binoConds(1,n), binoConds(2,n));
 
@@ -40,9 +40,16 @@ for i = 1:length(channum)
             monoBsl = mean(monoData(1:200,:));
             mono_mean_bs = monoData(72:end, :) - monoBsl;
             
+            %{
+            figure();
+            plot(mean(bino_mean_bs,2))
+            hold on
+            plot(mean(mono_mean_bs,2))
+            legend('Bino','Mono')
+            %}
+            
             %bs_data(i).(xfilename).(binoBinNb) = bino_mean_bs;
-
-            clear S namelist;
+            clear binoS monoS;
             [binoS,t,f]  = mtspecgramc(bino_mean_bs(:,:) ,movingwin, params);
             Ses(i).(xfilename).(binoBinNb) = binoS;
             %mean_S(:,:,i) = nanmean(S,3);
@@ -66,17 +73,12 @@ for i = 1:length(channum)
             cond2               = part1;
         end
         
-        [X,Y,T,AUC]      = perfcurve([ones(length(cond1),1); repmat(2,length(cond2),1)],[cond1 cond2],1);
+        [X,Y,T,AUC]      = perfcurve([ones(length(cond1),1); repmat(2,length(cond2),1)],[cond1 cond2],1); %returns X and Y coordinates of ROC curve on our mono vs bino samples + AUC, given the labels (cond1 cond2) and values associated (or scores) 
         NP                    = length(cond2);
         PR                    = length(cond1);
         catdat               = [cond1 cond2];
-        
-        shufPR         = catdat(randperm(length(catdat),PR));
-        shufNP         = catdat(randperm(length(catdat),NP));
-        [Xshuf,Yshuf,~, shufAUC]    = perfcurve([ones(PR,1); repmat(2,NP,1)],[shufPR shufNP],1);
-        
         reps   = 10000;
-        for r       = 1:reps
+        for r = 1:reps
             clear shufNP shufPR
             shufPR         = catdat(randperm(length(catdat),PR));
             shufNP         = catdat(randperm(length(catdat),NP));
@@ -84,22 +86,27 @@ for i = 1:length(channum)
                 shufAUC(r)]    = perfcurve([ones(PR,1); repmat(2,NP,1)],[shufPR shufNP],1);
         end
         critT95         = quantile(shufAUC,.95);
-        critT90         = quantile(shufAUC,.95);
+        %critT90         = quantile(shufAUC,.90);
         
-        if AUC > critT95
+        if (AUC > critT95) && (nanmean(part1) > nanmean(part2))%if AUC superior to 95% quantile, likely not by chance, reject null hypothesis
             sig95          = 1;
         else
-            sig95          = 0;
+            if (AUC > critT95) && (nanmean(part1) < nanmean(part2))
+                sig95          = -1;
+            else
+                sig95          = 0;
+            end
         end
         
         all_sigs95(i,n) = sig95;
-        
+        %{
         if AUC > critT90
             sig90        = 1;
         else
             sig90         = 0;
         end
         all_sigs90(i,n) = sig90;
+        %}
         end
     end
 end
