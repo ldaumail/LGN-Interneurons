@@ -141,13 +141,14 @@ end
 
 %% Process .ns6 files to get the MUA and the right trial indices
 
+% (1) Get MUA from .ns6 files 
 %.ns6 file directory
 selectxFile = modulxFilenames{1};
 selectDate = selectxFile(2:9);
 dataDir = strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\',selectDate,'\');
-
 ns6Filenames = dir(strcat(dataDir, '*cinterocdrft*'));
-for fn = 1:size(ns6Filenames.name)
+stackedMUA = struct();
+for fn = 1:length({ns6Filenames.name})
     ns6_filename = ns6Filenames(fn).name;
     clear ext NS_header banks neural
     % Read in NS Header
@@ -176,7 +177,7 @@ for fn = 1:size(ns6Filenames.name)
             % open data for this channel.
             clear NS DAT
             electrode = sprintf('c:%u',e);
-            NS        = openNSx(strcat(dataDir,ns6_filename),electrode,'read');%'uV');
+            NS        = openNSx(strcat(dataDir,ns6_filename),electrode,'read','uV');
             DAT       = NS.Data; NS.Data = [];  % this is the whole signal on one channel, 30 kHz!
 
 
@@ -219,9 +220,6 @@ for fn = 1:size(ns6Filenames.name)
             [bwb,bwa] = butter(4,hWn,'high');
             hpsLFP      = filtfilt(bwb,bwa,DAT);  %low pass filter
             %}
-            % decimate analog MUA (aMUA) to get 1kHz samp freq
-            % MUA(:,nct) = decimate(lpMUA,r);
-
             % decimate sLFP to get 20kHz samp freq
             %LFP(:,nct) = decimate(hpsLFP,r2);
 
@@ -253,13 +251,16 @@ for fn = 1:size(ns6Filenames.name)
    %apply sorting
     Srt_MUA(:,idx) = MUA(:,:);
     sortedLabels = NeuralLabels(idx);
+    
+    mua_filename = strcat('x',ns6_filename(1:end-4));
+    stackedMUA.(mua_filename).MUA = Srt_MUA;
+    stackedMUA.(mua_filename).sortedLabels = sortedLabels;
 
+end
 
+%mkdir(strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\mua_bino_modul\', selectDate))    
+%filtdir =strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\mua_bino_modul\', selectDate);
 
-filtdir ='C:\Users\daumail\Documents\LGN_data\single_units\s_potentials_analysis\data\filt_data';
-
-% save(strcat(trigdir,'\',ns6_filename, '_rectified_1000hz_aMUA.mat'), 'STIM_aMUA');
-RelChan = Srt_sLFP(:,11); %store data of the relevant channel
-save(strcat(filtdir,'\',ns6_filename, '_250hzhighpass_30khz_sLFP.mat'), 'RelChan','-v7.3');
+%save(strcat(filtdir,'_cinterocdrft_750hzhighpass_1khz_MUA.mat'), 'stackedMUA','-v7.3');
 
 
