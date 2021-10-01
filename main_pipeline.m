@@ -122,20 +122,22 @@ end
 %}
 
 %transfer necessary .ns6 files from TEBA onto main disk
-for i = 2:length(modulxFilenames)
+for i = 1:length(modulxFilenames)
     
     selectxFile = modulxFilenames{i};
     selectDate = selectxFile(2:9);
-    %ns6Dir = strcat('E:\LGN_data_TEBA\rig021\', selectDate);
+    ns6Dir = strcat('E:\LGN_data_TEBA\rig021\', selectDate);
     %ns6Dir = strcat('E:\LGN_data_TEBA\rig021_2\', selectDate);
     %ns6Dir = strcat('E:\LGN_data_TEBA\rig022_2\', selectDate);
-     ns6Dir = strcat('E:\LGN_data_TEBA\rig022\', selectDate);
+     %ns6Dir = strcat('E:\LGN_data_TEBA\rig022\', selectDate);
     if exist(ns6Dir, 'dir')
-        mkdir(strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\', selectDate))
+        %mkdir(strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\', selectDate))
         sourcedir = ns6Dir;
         destdir = strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\',selectDate);
+   %[status, msg] = copyfile( strcat(sourcedir,'\*cinterocdrft*.ns6'),  destdir);
+     [status, msg] = copyfile( strcat(sourcedir,'\*cinterocdrft*.nev'),  destdir);
     end
-    [status, msg] = copyfile( strcat(sourcedir,'\*cinterocdrft*.ns6'),  destdir);
+   
 end
 
 
@@ -143,10 +145,10 @@ end
 
 % (1) Get MUA from .ns6 files 
 %.ns6 file directory
-selectxFile = modulxFilenames{1};
+selectxFile = modulxFilenames{1}; %try with one file
 selectDate = selectxFile(2:9);
 dataDir = strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\',selectDate,'\');
-ns6Filenames = dir(strcat(dataDir, '*cinterocdrft*'));
+ns6Filenames = dir(strcat(dataDir, '*cinterocdrft*.ns6'));
 stackedMUA = struct();
 for fn = 1:length({ns6Filenames.name})
     ns6_filename = ns6Filenames(fn).name;
@@ -260,7 +262,49 @@ end
 
 %mkdir(strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\mua_bino_modul\', selectDate))    
 %filtdir =strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\mua_bino_modul\', selectDate);
-
 %save(strcat(filtdir,'_cinterocdrft_750hzhighpass_1khz_MUA.mat'), 'stackedMUA','-v7.3');
 
+%% LOAD EVENT TIMES/CODES TO TRIGGER DATA
+%The NEV files contain the digital event codes that are sent from MonkeyLogic to the 
+%BlackRock machine. They are sent for different stimulus/behavioral events, 
+%including when the stimuli appear on the screen. 
+ 
+NEV             = openNEV([filename '.nev'],'noread','overwrite');
 
+%The codes themselves can found in this field after subtracting 128 (unknown quirk). 
+%Good codes to know are 23, 25, 27, 29, 31 (Stimulus Onsets—23 
+%is first stimulus on in a trial, 25 is second stimulus on in a trial, etc). 
+%Stimulus offsets are the evens in that range—24, 26, 28, 30, 32. 
+%The starts of trials are signaled by 999 and the ends by 18 18 18. 
+%There are others in there as well. 
+
+EventCodes      = NEV.Data.SerialDigitalIO.UnparsedData - 128;        % we don't know whywe have to subtract 128 but we do
+%The time the code was sent can be found in this field. 
+%This is in samples (at the 30kHz rate). The Times on the next line are in seconds. 
+%We multiply by 1000 to get into ms. 
+ 
+EventSamples    = NEV.Data.SerialDigitalIO.TimeStamp;                 % in samples 
+EventTimes      = floor(NEV.Data.SerialDigitalIO.TimeStampSec.*1000); % convert to ms 
+
+%Checkout the parsEventCodesML function. It takes those 999s and 18 18 18s and 
+%breaks up the codes/times into separate trials.
+%Rfori files typically contain 5 stimulus presentations per trial.
+
+[pEvC, pEvT]    = parsEventCodesML(EventCodes,EventSamples);          % sorts codes, samps or times into trials
+
+
+% So far all of these data are from EVERY trial, including trials where
+% animal breaks fixation. Lets get rid of those and make a new structure
+% with the grating info and the stimulus onsets 
+
+STIM            = sortStimandTimeData(grating,pEvC,pEvT,'stim'); % this is in nbanalysis. definitely double check it before you use it. 
+
+%% Trigger MUA to behavioral event codes
+
+pre   = -50;
+post  = 300; 
+
+STIM.aMUA = trigData(Srt_MUA,floor(STIM.onsets./30),-pre,post); 
+
+
+%% re-trigger MUA to photodiode = use photoRetriggerSTIM..?
