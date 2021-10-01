@@ -83,7 +83,7 @@ allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\
 save(strcat(allfilename, '.mat'), 'sigPooledResults');
 %% Plot mean response of modulated data 
 
-%% III. Get MUA corresponding to the modulated SUA
+%% III. Get .ns6 files and .nev files for the MUA that corresponds to the modulated SUA
 
 %get modulated single units indices
 allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\binmod_lgn_pooled_power_test_09292021';
@@ -123,17 +123,143 @@ end
 
 %transfer necessary .ns6 files from TEBA onto main disk
 for i = 2:length(modulxFilenames)
-%i =1;
-selectxFile = modulxFilenames{i};
-selectDate = selectxFile(2:9);
-ns6Dir = strcat('E:\LGN_data_TEBA\rig021\', selectDate);
+    
+    selectxFile = modulxFilenames{i};
+    selectDate = selectxFile(2:9);
+    %ns6Dir = strcat('E:\LGN_data_TEBA\rig021\', selectDate);
+    %ns6Dir = strcat('E:\LGN_data_TEBA\rig021_2\', selectDate);
+    %ns6Dir = strcat('E:\LGN_data_TEBA\rig022_2\', selectDate);
+     ns6Dir = strcat('E:\LGN_data_TEBA\rig022\', selectDate);
+    if exist(ns6Dir, 'dir')
+        mkdir(strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\', selectDate))
+        sourcedir = ns6Dir;
+        destdir = strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\',selectDate);
+    end
+    [status, msg] = copyfile( strcat(sourcedir,'\*cinterocdrft*.ns6'),  destdir);
+end
 
-if exist(ns6Dir, 'dir')
-    mkdir(strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\', selectDate))
-    sourcedir = ns6Dir;
-    destdir = strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\',selectDate);
-end
-[status, msg] = copyfile( strcat(sourcedir,'\*cinterocdrft*.ns6'),  destdir);
-end
-%end
+
+%% Process .ns6 files to get the MUA and the right trial indices
+
+%.ns6 file directory
+selectxFile = modulxFilenames{1};
+selectDate = selectxFile(2:9);
+dataDir = strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\ns6_bino_modul\',selectDate,'\');
+
+ns6Filenames = dir(strcat(dataDir, '*cinterocdrft*'));
+for fn = 1:size(ns6Filenames.name)
+    ns6_filename = ns6Filenames(fn).name;
+    clear ext NS_header banks neural
+    % Read in NS Header
+    ext          = 'ns6';
+    NS_Header    = openNSx(strcat(dataDir,ns6_filename),'noread');
+    el  = 'eD';
+    % get basic info about recorded data
+    neural       = strcmp({NS_Header.ElectrodesInfo.ConnectorBank},el(2)); % logicals where contact bank name matches electrode of interest
+    N.neural     = sum(neural); % number of neural channels
+    NeuralLabels = {NS_Header.ElectrodesInfo(neural).Label}; %get labels
+    Fs           = NS_Header.MetaTags.SamplingFreq; % get sampling frequency
+    nyq          = Fs/2;
+    r            = Fs/1000;
+    %r2           = Fs/30000;
+
+    % counters
+    clear nct
+    nct = 0;
+
+    tic
+    % process data electrode by electrode
+    for e = 1:length(neural)
+        if neural(e) == 1    % why? because neural is a vector of logicals, 1 = contacts we want
+            nct = nct+1;
+
+            % open data for this channel.
+            clear NS DAT
+            electrode = sprintf('c:%u',e);
+            NS        = openNSx(strcat(dataDir,ns6_filename),electrode,'read');%'uV');
+            DAT       = NS.Data; NS.Data = [];  % this is the whole signal on one channel, 30 kHz!
+
+
+            % preallocate data matrices
+            if nct == 1
+                N.samples = length(DAT);
+                %LFP       = zeros(ceil(N.samples/r),N.neural); % preallocating for downsampled data
+                MUA      = zeros(ceil(N.samples/r),N.neural);
+            end
+        % extract the MUA:
+            clear hpc hWn bwb bwa hpMUA
+            hpc       = 750;  %high pass cutoff
+            hWn       = hpc/nyq;
+            [bwb,bwa] = butter(4,hWn,'high');
+            hpMUA     = filtfilt(bwb,bwa,double(DAT)); %high pass filter
+
+            % low pass at 5000 Hz and rectify 
+            clear lpc lWn bwb bwa 
+            lpc       = 5000;  % cutoff
+            lWn       = lpc/nyq;
+            [bwb,bwa] = butter(4,lWn,'low');
+            hpMUA     = abs(filtfilt(bwb,bwa,hpMUA)); %low pass filter &rectify
+
+            % low pass filter at x Hz. 
+            clear lpc lWn bwb bwa lpMUA
+            lpc       = 200; %low pass cutoff
+            lWn       = lpc/nyq;
+            [bwb,bwa] = butter(4,lWn,'low'); 
+            lpMUA     = filtfilt(bwb,bwa,hpMUA);  %low pass filter to smooth
+
+
+            % decimate both LFP and analog MUA (aMUA) to get 1kHz samp freq
+            MUA(:,nct) = decimate(lpMUA,r); 
+            
+            % high pass filter
+             %{
+            clear hpc hWn bwb bwa hpMUA
+            hpc       = 250; %high pass cutoff
+            hWn       = hpc/nyq;
+            [bwb,bwa] = butter(4,hWn,'high');
+            hpsLFP      = filtfilt(bwb,bwa,DAT);  %low pass filter
+            %}
+            % decimate analog MUA (aMUA) to get 1kHz samp freq
+            % MUA(:,nct) = decimate(lpMUA,r);
+
+            % decimate sLFP to get 20kHz samp freq
+            %LFP(:,nct) = decimate(hpsLFP,r2);
+
+            clear DAT
+
+        end
+
+    end
+    toc
+    % Warning! THESE DATA ARE IN THE SAME ORDER AS THE BR PINS, NOT THE ORDER OF THE PROBE
+    %As the .ns6 data was retrieved using openNSx() and not getLFP(), we need
+    %to sort the channels ourselves. With getLFP(), sorting is done
+    %automatically
+    % sort data from top of electrode to bottom.
+
+    % get indices
+    idx = zeros(1,length(NeuralLabels));
+    for i = 1:length(NeuralLabels)
+
+        Str  = cell2mat(NeuralLabels(i));
+        Key   = 'eD';
+        Str(strfind(Str, '%02d')) = [];
+
+        Index = strfind(Str, Key);
+        idx(1, i) = sscanf(Str(Index(1) + length(Key):end), '%g', 1);
+
+    end
+    Srt_MUA = nan(length(MUA(:,1)), length(NeuralLabels));
+   %apply sorting
+    Srt_MUA(:,idx) = MUA(:,:);
+    sortedLabels = NeuralLabels(idx);
+
+
+
+filtdir ='C:\Users\daumail\Documents\LGN_data\single_units\s_potentials_analysis\data\filt_data';
+
+% save(strcat(trigdir,'\',ns6_filename, '_rectified_1000hz_aMUA.mat'), 'STIM_aMUA');
+RelChan = Srt_sLFP(:,11); %store data of the relevant channel
+save(strcat(filtdir,'\',ns6_filename, '_250hzhighpass_30khz_sLFP.mat'), 'RelChan','-v7.3');
+
 
