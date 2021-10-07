@@ -144,11 +144,12 @@ end
 
 % (1) Get MUA from .ns6 files 
 %.ns6 file directory
-directory = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\loic_code_042021\lgn_interneuron_suppression';
-addpath(genpath(directory))
+codeDir = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\loic_code_042021\lgn_interneuron_suppression';
+addpath(genpath(codeDir))
 
-selFilenames = modulxFilenames([4;9:11]); %also need to do #8 but there is a bug
-rectMUA = rectifiedMUA(selFilenames, modulChannel);
+selFilenames = modulxFilenames(8:11); %also need to do #8 but there is a bug
+selChan = modulChannel(8:11);
+rectMUA = rectifiedMUA(selFilenames, selChan);
 
 %mkdir(strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\mua_bino_modul\', selectDate))    
 %filtdir =strcat('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\mua_bino_modul\', selectDate);
@@ -257,8 +258,8 @@ STIM.aMUA = trigData(stacked_MUA.stackedMUA.(muaFiles{1}).MUA,floor(STIM.onsets.
 
 
 %% VIII. re-trigger MUA to photodiode = use photoRetriggerSTIM..?
-TP = repmat([pre post], length(STIM.trial),1);
-STIM.photoMUA = photoReTrigger(TP, filename,STIM.ypos, STIM);
+TP = [STIM.trstart STIM.trend];
+[newTP, trigger{i,n}, STIM]= photoReTrigger(TP, filename,STIM.ypos,{}, STIM);
 
 
 

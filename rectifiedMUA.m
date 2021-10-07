@@ -107,7 +107,7 @@ for i = 1:length(modulxFilenames)
         for i = 1:length(NeuralLabels)
             
             Str  = cell2mat(NeuralLabels(i));
-            Key   = 'eD';
+            Key   = curChan(1:2);
             Str(strfind(Str, '%02d')) = [];
             
             Index = strfind(Str, Key);
@@ -125,7 +125,7 @@ for i = 1:length(modulxFilenames)
         
     end
 muaDir = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\mua_bino_modul\';
-save(strcat(muaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_MUA.mat',selectDate)), 'stackedMUA','-v7.3');
+save(strcat(muaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_MUA.mat',selectxFile(2:13))), 'stackedMUA','-v7.3');
  rectMUA.(selectxFile) = stackedMUA; 
 end
 end
