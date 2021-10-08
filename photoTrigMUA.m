@@ -103,6 +103,6 @@ for i = 1: length(unique(penetrations)) %number of sessions
         
         save(strcat(photoTrigMuaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_photoReTrigMUA.mat',selectFile)), 'photoDiodeMUA','-v7.3');
     end
-    all_photoMUA.(selectFile) =  photoDiodeMUA;
+    all_photoMUA.(strcat('x',selectFile)) =  photoDiodeMUA;
 end
 end
