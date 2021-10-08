@@ -167,8 +167,9 @@ for i =1:length(modulxFilenames)
     fname = modulxFilenames{i};
     penetrations{i} = fname(2:13);
 end
+relpene = unique(penetrations);
 dataDir =  'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\';
-[all_photoMUA] = photoTrigMUA(penetrations, dataDir);
+[all_photoMUA] = photoTrigMUA(relpene(7:end), dataDir);
 
 
 

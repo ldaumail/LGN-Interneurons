@@ -1,10 +1,11 @@
 function [all_photoMUA] = photoTrigMUA(penetrations, dataDir)
 
+
 ns6Dir = strcat(dataDir, 'ns6_bino_modul\');
 muaDir = strcat(dataDir, 'mua_bino_modul\'); 
 photoTrigMuaDir = strcat(dataDir, 'photoReTrig_mua\');
 
-for i = 1: length(unique(penetrations)) %number of sessions
+for i = 1: length(penetrations) %number of sessions
     selectFile = penetrations{i}; %try with one file, but use 'i' index otherwise !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     selectDate = selectFile(1:8);
     peneDir = strcat(ns6Dir,selectDate,'\');
