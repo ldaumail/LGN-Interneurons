@@ -3,6 +3,7 @@ function [selectData] = suaTrialSelectionContPool(unitsData, filenames)
 %    -the peak locations of the smoothed (low-pass filtered) data
 %    - as well as the trials data they correspond to.
 %    - the binary data of those trials
+%    -trial indices
 %Last edited by Loic Daumail on 09/27/2021
 %Location of multiunits data isolated in the previous section
 
@@ -37,7 +38,7 @@ contPairs = combvec(contLimsNDE(1:end-1), contLimsDE(1:end-1)); %all possible co
              NDETrCt = unitsData.new_data(i).channel_data.fixedc; %trial by trial contrasts in NDE
              DETrCt = unitsData.new_data(i).channel_data.contrast; %trial by trial contrasts in DE
              
-             blankcontrast = DETrCt ==  0 & NDETrCt ==  0; %get logicacal indices of trials with 0 contrast in both eyes
+             blankcontrast = DETrCt ==  0 & NDETrCt ==  0; %get logical indices of trials with 0 contrast in both eyes
              
              if n ==1
              %if (find(contLims == contPairs(1,n))+1 <= length(contLims)) & (find(contLims == contPairs(2,n))+1 <= length(contLims))
@@ -103,7 +104,7 @@ contPairs = combvec(contLimsNDE(1:end-1), contLimsDE(1:end-1)); %all possible co
              filtered_dSUA_Resp = filtBs(:,contrastBin);
              sua_bsl =  mean(filtered_dSUA_Resp(1:200,:),1);
              trialnb = find(contrastBin);
-             %trials = unitsData.new_data(i).channel_data.trial(contrastBin);
+             trials_indices = unitsData.new_data(i).channel_data.trial(contrastBin);
              
              clear tr
              for tr = 1:length(powerResp)
@@ -239,7 +240,7 @@ contPairs = combvec(contLimsNDE(1:end-1), contLimsDE(1:end-1)); %all possible co
              binary_data_Resp = unitsData.new_data(i).channel_data.spk_bin_chan(:,trialnb); %get the binary spikes data
              origin_data_Resp = origin_data_Resp(:,~all(isnan(origin_data_Resp)));
              all_locsdSUA_trials =  all_locsdSUA_trials(:,~all(isnan(all_locsdSUA_trials)));
-             
+             trials_indices = trials_indices(~all(isnan(origin_data_Resp)));
              %filtered_dMUA_high = filtered_dMUA_high(:,~all(isnan(filtered_dMUA_high))); % for nan - cols
              %all_pks = all_pks(:, ~all(isnan(all_pks)));
              %bsl_origin_data_high = bsl_origin_data_high(:,~all(isnan(bsl_origin_data_high)));
@@ -257,12 +258,14 @@ contPairs = combvec(contLimsNDE(1:end-1), contLimsDE(1:end-1)); %all possible co
                  selectData.(xfilename).NoFiltMultiContSUA.(binNb) = origin_data_Resp;
                  selectData.(xfilename).peakLocs.(binNb) = all_locsdSUA_trials; %create dynamical peak locations structures
                  selectData.(xfilename).binSpkTrials.(binNb) = binary_data_Resp;
+                 selectData.(xfilename).trials.(binNb) = trials_indices;
                  selectData.(xfilename).chan = unitsData.new_data(i).channel_data.chan;
                                  
              elseif  length(origin_data_Resp(1,:)) <10
                  selectData.(xfilename).NoFiltMultiContSUA.(binNb) = [];
                  selectData.(xfilename).peakLocs.(binNb) = [];
                  selectData.(xfilename).binSpkTrials.(binNb) = [];
+                 selectData.(xfilename).trials.(binNb) = [];
              end
              
              
