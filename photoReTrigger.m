@@ -183,12 +183,13 @@ end
 
 switch BRdatafile(8)
     case 'B'
-        thresh = 1.7;
+        %thresh = 1.7;
+        thresh = 1.4; %Changed by Loic Daumail on 10/8/2021
     case 'I'
         thresh = 3;
 end
 
-if any(strcmp(BRdatafile(1:8),'181207_B'))
+if any(strcmp(BRdatafile(1:8),'181207_B')) %|| any(strcmp(BRdatafile(1:8),'181212_B'))
     thresh = 1.4; 
 end
 

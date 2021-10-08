@@ -11,11 +11,15 @@ for i = 1: length(penetrations) %number of sessions
     peneDir = strcat(ns6Dir,selectDate,'\');
     
     textFilenames = dir(strcat(peneDir, '*.gCINTEROCDRFTGrating_di'));
+
+
+    stacked_MUA = load(strcat(muaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_MUA.mat',selectFile)));
+    muaFiles = fieldnames(stacked_MUA.stackedMUA);
+
     for n = 1:length({textFilenames.name})
         BRdatafile = textFilenames(n).name(1:24); %try with first file use 'n' index !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         filename   = [peneDir BRdatafile];
-        
-        
+
         %% V. LOAD STIMULUS CONDITIONS with text file
         
         patterns   = {'rforidrft','rfsfdrft','posdisparitydrft','disparitydrft','cinterocdrft','coneinterocdrft','conedrft', ...
@@ -87,9 +91,6 @@ for i = 1: length(penetrations) %number of sessions
         STIM            = sortStimandTimeData(grating,pEvC,pEvT,'stim'); % this is in nbanalysis. definitely double check it before you use it.
         
         %% VII. Trigger MUA to behavioral event codes
-       
-        stacked_MUA = load(strcat(muaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_MUA.mat',selectFile)));
-        muaFiles = fieldnames(stacked_MUA.stackedMUA);
         pre   = -600;
         post  = 1300;
         %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -99,9 +100,7 @@ for i = 1: length(penetrations) %number of sessions
         %% VIII. re-trigger MUA to photodiode = use photoRetriggerSTIM..?
         TP = [STIM.trstart STIM.trend];
         [newTP, trigger, STIM]= photoReTrigger(TP, filename,STIM.ypos,{}, STIM);
-        
-        photoDiodeMUA.(muaFiles{n}) = STIM;
-        
+        photoDiodeMUA.(muaFiles{n}) = STIM;  
         save(strcat(photoTrigMuaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_photoReTrigMUA.mat',selectFile)), 'photoDiodeMUA','-v7.3');
     end
     all_photoMUA.(strcat('x',selectFile)) =  photoDiodeMUA;
