@@ -179,10 +179,27 @@ single_units = load(strcat(allfilename, '.mat'));
 %%(2)get single unit trials indices
 tridx = struct();
 for i = 1:length(sigBinoModulIdx)
-    tridx.(modulxFilenames{i}) = single_units.selected_data_pooled.(modulxFilenames{i});
+    tridx.(modulxFilenames{i}) = single_units.selected_data_pooled.(modulxFilenames{i}).trials;
 end
 %%(3)select MUA trials
+dataDir =  'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\';
+photoTrigMuaDir = strcat(dataDir, 'photoReTrig_mua\');
+muaFilenames = dir(strcat(photoTrigMuaDir, '*cinterocdrft*'));
 
+for i = 1:length(modulxFilenames) %modulated sua filenames
+    xFilename = modulxFilenames{i};
+    selectDate = xFilename(2:9);
+    for j = 1:length({muaFilenames.name}) %potentially corresponding mua files
+        if strfind(muaFilenames(j).name,selectDate)
+            MUAfile = load(strcat(photoTrigMuaDir, muaFilenames(j).name));
+            all_MUA = [];
+            for n = 1:length(fieldnames())
+            end
+            mua.(selectDate) = MUAfile.photoDiodeMUA.
+        end
+    end
+    
+    
 %%(4)plot MUA
 
 
