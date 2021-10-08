@@ -9,14 +9,12 @@
 
 %% Pre-start: use the list of single units file names that were selected in the adaptation analysis with
 % high contrast
-selectUnitsFilenames =load('C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\s_potentials_analysis\analysis\single_units_ns6_metadata.mat');
-filenames = selectUnitsFilenames.STIMFileName;
-
-
 unitsDir = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\inverted_power_channels\good_single_units_data_4bumps_more\new_peak_alignment_anal\';
 unitsDataDir = [unitsDir 'refined_dataset']; 
 unitsData= load(unitsDataDir);
 
+selectUnitsFilenames =load(strcat(unitsDir,'single_units_ns6_metadata.mat'));
+filenames = selectUnitsFilenames.STIMFileName;
 
 cellClass = {'K','M','P','K','K','K','M','P','P','','M','M','','','M','','','P','','M','','M','M','','P','M','','P', ...
 'P','','','K','P','M','M','M','P','','P','K','P','P','','P','P','M','','P','M','P','M','P','','P','M','M','P','','M','M','P','M', ...
@@ -169,8 +167,23 @@ for i =1:length(modulxFilenames)
 end
 relpene = unique(penetrations);
 dataDir =  'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\';
-[all_photoMUA] = photoTrigMUA(relpene(7:end), dataDir);
+[all_photoMUA] = photoTrigMUA(relpene(9), dataDir);
 
+
+%% Plot multiunit corresponding to each single unit
+
+%%(1)load single units, take data used to perform ROC analysis of power at 4Hz
+allfilename = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\all_cont_lgn_data_pooled_09292021';
+single_units = load(strcat(allfilename, '.mat'));
+
+%%(2)get single unit trials indices
+tridx = struct();
+for i = 1:length(sigBinoModulIdx)
+    tridx.(modulxFilenames{i}) = single_units.selected_data_pooled.(modulxFilenames{i});
+end
+%%(3)select MUA trials
+
+%%(4)plot MUA
 
 
 
