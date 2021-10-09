@@ -185,23 +185,66 @@ end
 dataDir =  'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\';
 photoTrigMuaDir = strcat(dataDir, 'photoReTrig_mua\');
 muaFilenames = dir(strcat(photoTrigMuaDir, '*cinterocdrft*'));
-
+mua = struct();
 for i = 1:length(modulxFilenames) %modulated sua filenames
     xFilename = modulxFilenames{i};
     selectDate = xFilename(2:9);
     for j = 1:length({muaFilenames.name}) %potentially corresponding mua files
         if strfind(muaFilenames(j).name,selectDate)
             MUAfile = load(strcat(photoTrigMuaDir, muaFilenames(j).name));
+            segNames = fieldnames(MUAfile.photoDiodeMUA);
             all_MUA = [];
-            for n = 1:length(fieldnames())
+            all_MUA_trials = [];
+            all_MUA_photo_on = [];
+            for n = 1:length(segNames)
+                all_MUA = cat(3,all_MUA, MUAfile.photoDiodeMUA.(segNames{n}).aMUA);
+                all_MUA_trials =cat(1,all_MUA_trials, MUAfile.photoDiodeMUA.(segNames{n}).trial);
+                all_MUA_photo_on = {all_MUA_trials; MUAfile.photoDiodeMUA.(segNames{n}).photo_on};
             end
-            mua.(selectDate) = MUAfile.photoDiodeMUA.
+            stimCond = fieldnames(tridx.(xFilename));
+            for bin =1:2
+                mua.(xFilename).mua.(stimCond{bin}) = all_MUA(:,:,tridx.(xFilename).(stimCond{bin}) );
+            end
         end
     end
+end
     
     
 %%(4)plot MUA
+xFilename = modulxFilenames{4};
+chan = modulChannel{4};
+mean_MUA_mono =nanmean(mua.(xFilename).mua.(stimCond{2}),3);
+mean_MUA_bino = nanmean(mua.(xFilename).mua.(stimCond{1}),3);
 
+dmeans = mean_MUA_mono - mean_MUA_bino;
+figure();
+imagesc(dmeans')
+ colorbar;
+title(sprintf('MUA %s channel modulated %s',xFilename, chan), 'interpreter', 'none')
 
+ saveDir = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\analysis\';
+ saveas(gcf,strcat(saveDir,'\',sprintf('mua_%s_%s_contacts.png', xFilename, chan)));
 
+ 
+ fint_data = filterCSD(dmeans')';
+
+h = figure();
+ xabs = [-600:1300];
+ yvec = [1:24];
+ imagesc(xabs,yvec, fint_data')
+title(sprintf('MUA %s channel modulated %s',xFilename, chan), 'interpreter', 'none')
+ colorbar;
+ saveDir = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\analysis\';
+ saveas(gcf,strcat(saveDir,'\',sprintf('mua_%s_%s.png', xFilename, chan)));
+ %climit = max(abs(get(gca,'CLim'))*.8);
+ %{
+ if any(strfind(inputname(1), 'CSD'))
+ set(gca,'CLim',[-800 800],'Box','off','TickDir','out')
+ else
+ end
+ %}
+ hold on;
+plot([0 0], ylim,'k')
+plot([1100 1100], ylim,'k')
+clrbar = colorbar;
 
