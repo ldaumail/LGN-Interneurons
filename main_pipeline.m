@@ -291,4 +291,4 @@ for i = 1:length(modulxFilenames)
     saveas(gcf,strcat(saveDir,'\',sprintf('mua_%s_%s.svg', xFilename, chan)));
 end
  
-
+%% Spike-trigger MUA to SUA spikes
