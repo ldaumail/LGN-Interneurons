@@ -215,14 +215,21 @@ for i = 1:length(modulxFilenames) %modulated sua filenames
                 suaToMuaTrials = suaTrials(suaTrials < size(all_MUA_trials,1));
                 mua.(xFilename).mua.(stimCond{bin}) = all_MUA(:,:,suaToMuaTrials);
                 mua.(xFilename).photo_on.(stimCond{bin}) = photo_on(suaToMuaTrials);
-                mua.(xFilename).photo_on.(stimCond{bin}) = all_MUA_onsets(suaToMuaTrials);
+                mua.(xFilename).onsets.(stimCond{bin}) = all_MUA_onsets(suaToMuaTrials);
+                mua.(xFilename).time_diff.(stimCond{bin}) = all_MUA_onsets(suaToMuaTrials) - photo_on(suaToMuaTrials);
             end
         end
     end
 end
  
 %%(4) trigger to photodiode onset times
-
+for i = 1:length(modulxFilenames) %modulated sua filenames
+    xFilename = modulxFilenames{i};
+    selectDate = xFilename(2:9);
+    stimCond = fieldnames(tridx.(xFilename));
+            for bin =1:2
+                
+           
     
 %%(5)plot MUA
 for i = 1:length(modulxFilenames)
