@@ -6,16 +6,16 @@ muaDir = strcat(dataDir, 'mua_bino_modul\');
 photoTrigMuaDir = strcat(dataDir, 'photoReTrig_mua\');
 
 for i = 1: length(penetrations) %number of sessions
-    selectFile = penetrations{i}; %try with one file, but use 'i' index otherwise !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    selectDate = selectFile(1:8);
+    selectDate = penetrations{i}; %try with one file, but use 'i' index otherwise !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    %selectDate = selectFile(1:8);
     peneDir = strcat(ns6Dir,selectDate,'\');
     
     textFilenames = dir(strcat(peneDir, '*.gCINTEROCDRFTGrating_di'));
 
 
-    stacked_MUA = load(strcat(muaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_MUA.mat',selectFile)));
+    stacked_MUA = load(strcat(muaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_MUA.mat',selectDate)));
     muaFiles = fieldnames(stacked_MUA.stackedMUA);
-
+    photoDiodeMUA = struct();
     for n = 1:length({textFilenames.name})
         BRdatafile = textFilenames(n).name(1:24); %try with first file use 'n' index !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         filename   = [peneDir BRdatafile];
@@ -101,8 +101,9 @@ for i = 1: length(penetrations) %number of sessions
         TP = [STIM.trstart STIM.trend];
         [newTP, trigger, STIM]= photoReTrigger(TP, filename,STIM.ypos,{}, STIM);
         photoDiodeMUA.(muaFiles{n}) = STIM;  
-        save(strcat(photoTrigMuaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_photoReTrigMUA.mat',selectFile)), 'photoDiodeMUA','-v7.3');
     end
-    all_photoMUA.(strcat('x',selectFile)) =  photoDiodeMUA;
+    save(strcat(photoTrigMuaDir,sprintf('%s_cinterocdrft_750hzhighpass_1khz_photoReTrigMUA.mat',selectDate)), 'photoDiodeMUA','-v7.3');
+ 
+    all_photoMUA.(strcat('x',selectDate)) =  photoDiodeMUA;
 end
 end
