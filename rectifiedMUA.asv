@@ -118,7 +118,7 @@ for i = 1:length(modulxFilenames)
             
         end
         Srt_MUA = nan(length(MUA(:,1)), length(NeuralLabels));
-        sortedLabels = cell(1, length(NeuralLabels));
+        sortedLabels = nan(1, length(NeuralLabels));
         %apply sorting
         Srt_MUA(:,idx) = MUA(:,:);
         sortedLabels(idx) = NeuralLabels;
@@ -130,6 +130,6 @@ for i = 1:length(modulxFilenames)
     end
 muaDir = 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\mua_bino_modul\';
 save(strcat(muaDir,sprintf('%s_cinterocdrft_750hzhighpass_30khz_MUA.mat',selectxFile(2:13))), 'stackedMUA','-v7.3');
-rectMUA.(selectxFile) = stackedMUA; 
+ rectMUA.(selectxFile) = stackedMUA; 
 end
 end

@@ -300,7 +300,7 @@ bossData = loadNEV(strcat(bossDataDir,nevfilename), 'read');
 
 %% 1) get spike timestamps from electrode 16
 electrodesInfo = table(bossData.ElectrodesInfo);
-el = 'eD22';
+el = 'eD16';
 for i =1:size(electrodesInfo.Var1,2)
     if contains(erase(strjoin(string(bossData.ElectrodesInfo(i).ElectrodeLabel)),' '), el)
         electrodeID = electrodesInfo.Var1(1,i).ElectrodeID; 
@@ -372,8 +372,8 @@ xticks(linspace(-50,500,6))
 colorbar;
 title(sprintf('Spike triggered MUA %s unit 1 on contact %s',nevfilename(1:8),el), 'interpreter', 'none')
 plotdir= 'C:\Users\daumail\OneDrive - Vanderbilt\Documents\LGN_data_042021\single_units\lgn_interneuron_suppression\analysis\plots\';
-saveas(gcf,strcat(plotdir, sprintf('spiketrig_MUA_unit1_chan1319_%s_%s.png',nevfilename(1:8),el)));
-saveas(gcf,strcat(plotdir, sprintf('spiketrig_MUA_unit1_chan1319_%s_%s.svg',nevfilename(1:8),el)));
+saveas(gcf,strcat(plotdir, sprintf('spiketrig_MUA_unit1_%s_%s.png',nevfilename(1:8),el)));
+saveas(gcf,strcat(plotdir, sprintf('spiketrig_MUA_unit1_%s_%s.svg',nevfilename(1:8),el)));
 
 %2) spike trigger to unit 2 (looks more like a relay cell spike)
 muaChunk = fieldnames(mua.stackedMUA);
